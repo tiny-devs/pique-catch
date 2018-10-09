@@ -10,6 +10,13 @@ const config: GameConfig = {
     height: 600,    
     backgroundColor: '#85b5e1',        
     scene: [initialScene],
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
     input: {
         keyboard: true
     }
