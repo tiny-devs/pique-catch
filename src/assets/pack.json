@@ -1,0 +1,17 @@
+{
+    "preload": {
+      "files": [
+        {
+          "type": "image",
+          "key": "player",
+          "url": "./src/assets/phaser-dude.png"
+        },
+        {
+          "type": "image",
+          "key": "platform",
+          "url": "./src/assets/platform.png"
+        }
+      ]
+    }
+  }
+  

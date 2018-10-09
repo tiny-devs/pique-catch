@@ -7,7 +7,11 @@ export class initialScene extends Phaser.Scene {
     }
 
     preload(): void {
-        
+        this.load.pack(
+            "preload",
+            "./src/assets/pack.json",
+            "preload"
+          );
     }
 
     create(): void {
