@@ -1,7 +1,10 @@
 import { Platform } from "../objects/Platform";
+import { Player } from "../objects/Player";
 
 export class initialScene extends Phaser.Scene {
     private platforms: Phaser.GameObjects.Group;
+    private player1: Player;
+    private player2: Player;
 
     constructor() {
         super({
@@ -25,6 +28,8 @@ export class initialScene extends Phaser.Scene {
         this.addPlatform(200, 150);
         this.addPlatform(-200, 300);
         this.addPlatform(400, 450);
+        this.player1 = this.addPlayer(100, 200, "0xff0000");
+        this.player2 = this.addPlayer(600, 300, "0x4286f4");
     }
 
     private addPlatform(x, y): void{
@@ -35,6 +40,16 @@ export class initialScene extends Phaser.Scene {
             key: 'platform'
           });            
           this.platforms.add(platform);
+    }
+
+    private addPlayer(x, y, tint): Player{
+        return new Player({
+            scene: this,
+            x: x,
+            y: y,
+            tint: tint,
+            key: "player"
+        });
     }
 
 }
