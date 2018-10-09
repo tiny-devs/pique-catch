@@ -7,7 +7,8 @@ const config: GameConfig = {
     title: "Pique Catch",
     type: Phaser.AUTO,
     width: 800,
-    height: 600,            
+    height: 600,    
+    backgroundColor: '#85b5e1',        
     scene: [initialScene],
     input: {
         keyboard: true
