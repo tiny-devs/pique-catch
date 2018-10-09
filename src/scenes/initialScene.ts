@@ -32,6 +32,11 @@ export class initialScene extends Phaser.Scene {
         this.player2 = this.addPlayer(600, 300, "0x4286f4");
     }
 
+    update(): void{
+        this.physics.collide(this.player1, this.platforms.getChildren());
+        this.physics.collide(this.player2, this.platforms.getChildren());
+    }
+
     private addPlatform(x, y): void{
         let platform = new Platform({
             scene: this,
