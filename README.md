@@ -2,7 +2,14 @@
 
 [Play here :)](https://game-devs.github.io/pique-catch/)
 
-## Controls:
+## How to run
+```
+npm install
+
+npm run dev
+```
+
+## Controls
 
 ### Player 1
 - Move Left: A
