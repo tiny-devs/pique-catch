@@ -14,6 +14,10 @@ export class Player extends Phaser.GameObjects.Sprite {
         this.initInput(); 
         this.currentScene.add.existing(this);                       
     }
+
+    preUpdate(): void{
+        this.update();
+    }
      
     update(): void{   
         if(this.moveLeft.isDown)

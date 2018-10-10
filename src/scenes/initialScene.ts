@@ -64,8 +64,6 @@ export class initialScene extends Phaser.Scene {
     update(): void{
         this.physics.collide(this.player1, this.platforms.getChildren());
         this.physics.collide(this.player2, this.platforms.getChildren());
-        this.player1.update();
-        this.player2.update();
         this.physics.overlap(this.player1, this.player2, this.playerCatch, null, this);  
         this.timerText.setText(' - ' + this.roundTime + ' - '); 
     }
