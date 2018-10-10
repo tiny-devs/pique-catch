@@ -9,6 +9,7 @@ export class initialScene extends Phaser.Scene {
     private player1: Player;
     private player2: Player;
     private playerOneTurn: boolean;   
+    private scoreText: Phaser.GameObjects.Text;
     
 
     constructor() {
@@ -19,7 +20,7 @@ export class initialScene extends Phaser.Scene {
 
     init(): void{
         this.platforms = this.add.group({ classType: Platform }); 
-        this.playerOneTurn = false; 
+        this.playerOneTurn = true; 
     }
 
     preload(): void {
@@ -36,6 +37,14 @@ export class initialScene extends Phaser.Scene {
         this.addPlatform(400, 450);
         this.player1 = this.addPlayer(1, 100, 200, redColor);
         this.player2 = this.addPlayer(2, 600, 300, blueColor);
+        this.scoreText = this.add.text(
+            10,10,
+            'Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score,
+            {
+              fontFamily: "Connection",
+              fontSize: 20                                          
+            }
+          );
     }
 
     update(): void{
@@ -63,6 +72,7 @@ export class initialScene extends Phaser.Scene {
         }
         this.player1.setPosition(100, 200);
         this.player2.setPosition(600, 300);
+        this.scoreText.setText('Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score);
     }
 
     private addPlatform(x, y): void{
