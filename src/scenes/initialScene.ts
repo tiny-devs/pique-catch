@@ -98,7 +98,7 @@ export class initialScene extends Phaser.Scene {
 
         this.player1.setPosition(100, 200);
         this.player2.setPosition(600, 300);
-        this.scoreText.setText('Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score);
+        this.updateScore();
     }
 
     private getSwitcher(player, switcher): void{
@@ -155,6 +155,8 @@ export class initialScene extends Phaser.Scene {
         this.roundTime--;
 
         if(this.roundTime < 0){
+            this.playerOneTurn ? this.player2.score++ : this.player1.score++;
+            this.updateScore();
             this.toggleTurn();
             this.roundTime = this.initalRoundTime;
         }
@@ -174,5 +176,9 @@ export class initialScene extends Phaser.Scene {
         }
 
         this.playerOneTurn = !this.playerOneTurn;
+    }
+
+    private updateScore(): void{
+        this.scoreText.setText('Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score);
     }
 }
