@@ -28,13 +28,15 @@ export class initialScene extends Phaser.Scene {
         this.addPlatform(200, 150);
         this.addPlatform(-200, 300);
         this.addPlatform(400, 450);
-        this.player1 = this.addPlayer(100, 200, "0xff0000");
-        this.player2 = this.addPlayer(600, 300, "0x4286f4");
+        this.player1 = this.addPlayer(100, 200, 0xff0000);
+        this.player2 = this.addPlayer(600, 300, 0x4286f4);
     }
 
     update(): void{
         this.physics.collide(this.player1, this.platforms.getChildren());
         this.physics.collide(this.player2, this.platforms.getChildren());
+        this.player1.update();
+        this.player2.update();
     }
 
     private addPlatform(x, y): void{
@@ -56,5 +58,6 @@ export class initialScene extends Phaser.Scene {
             key: "player"
         });
     }
+
 
 }
