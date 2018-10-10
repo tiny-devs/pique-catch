@@ -118,7 +118,7 @@ export class initialScene extends Phaser.Scene {
                                     this.itemPositions[this.itemPosition][1]);
         }
 
-        
+        this.roundTime = this.initalRoundTime;
     }
 
     private addPlatform(x, y): void{
