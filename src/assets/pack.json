@@ -10,6 +10,11 @@
           "type": "image",
           "key": "platform",
           "url": "./src/assets/platform.png"
+        },
+		{
+          "type": "image",
+          "key": "item",
+          "url": "./src/assets/switch.png"
         }
       ]
     }
