@@ -10,7 +10,9 @@ export class initialScene extends Phaser.Scene {
     private player2: Player;
     private playerOneTurn: boolean;   
     private scoreText: Phaser.GameObjects.Text;
-    
+    private timerText: Phaser.GameObjects.Text;
+    private roundTime: number;
+    private initalRoundTime: number = 15;
 
     constructor() {
         super({
@@ -35,6 +37,7 @@ export class initialScene extends Phaser.Scene {
         this.addPlatform(200, 150);
         this.addPlatform(-200, 300);
         this.addPlatform(400, 450);
+        this.roundTime = this.initalRoundTime;
         this.player1 = this.addPlayer(1, 100, 200, redColor);
         this.player2 = this.addPlayer(2, 600, 300, blueColor);
         this.scoreText = this.add.text(
@@ -45,6 +48,17 @@ export class initialScene extends Phaser.Scene {
               fontSize: 20                                          
             }
           );
+
+        this.timerText = this.add.text(
+            350,10,
+            ' - ' + this.roundTime + ' - ',
+            {
+                fontFamily: "Connection",
+                fontSize: 20                                          
+            }
+        );
+
+        this.time.addEvent({ delay: 1000, callback: this.tick, callbackScope: this, loop: true });
     }
 
     update(): void{
@@ -52,24 +66,23 @@ export class initialScene extends Phaser.Scene {
         this.physics.collide(this.player2, this.platforms.getChildren());
         this.player1.update();
         this.player2.update();
-        this.physics.overlap(this.player1, this.player2, this.playerCatch, null, this);   
+        this.physics.overlap(this.player1, this.player2, this.playerCatch, null, this);  
+        this.timerText.setText(' - ' + this.roundTime + ' - '); 
     }
 
     private playerCatch(): void{
+
         if(this.playerOneTurn)
         {
-            this.playerOneTurn = false;
             this.player1.score++;
-            this.player1.setTint(blueColor);
-            this.player2.setTint(redColor);
         }
         else
         {
             this.player2.score++;
-            this.player2.setTint(blueColor);
-            this.player1.setTint(redColor);
-            this.playerOneTurn = true;
         }
+
+        this.toggleTurn();
+
         this.player1.setPosition(100, 200);
         this.player2.setPosition(600, 300);
         this.scoreText.setText('Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score);
@@ -96,5 +109,28 @@ export class initialScene extends Phaser.Scene {
         });
     }
 
+    private tick(){
+        this.roundTime--;
 
+        if(this.roundTime < 0){
+            this.toggleTurn();
+            this.roundTime = this.initalRoundTime;
+        }
+    }
+
+    private toggleTurn(){
+        if(this.playerOneTurn)
+        {
+            this.player1.setTint(blueColor);
+            this.player2.setTint(redColor);
+        }
+        else
+        {
+            this.player2.setTint(blueColor);
+            this.player1.setTint(redColor);
+            
+        }
+
+        this.playerOneTurn = !this.playerOneTurn;
+    }
 }
