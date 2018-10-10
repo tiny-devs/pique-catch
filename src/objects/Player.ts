@@ -4,6 +4,8 @@ export class Player extends Phaser.GameObjects.Sprite {
     private moveRight: Phaser.Input.Keyboard.Key;
     private currentScene: Phaser.Scene;
     private playerColor: number;
+    private playerScore: number;
+    private playerNumber: number;
 
     constructor(params) {
         super(params.scene, params.x, params.y, params.key);                          
@@ -35,7 +37,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     }
 
     private initInput(): void{
-        if(this.playerColor == 0xff0000) // Player's 1 Color
+        if(this.playerNumber === 1)
         {
             this.jumpKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
             this.moveLeft = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -58,8 +60,18 @@ export class Player extends Phaser.GameObjects.Sprite {
     private initVars(params): void{
         this.playerColor = params.tint;
         this.currentScene = params.scene; 
+        this.playerNumber = params.playerNumber;
         this.setOrigin(0, 0);        
         this.setSize(27,40); // Tamanho para colisao
-        this.setTint(this.playerColor);        
+        this.setTint(this.playerColor);
+        this.playerScore = 0;        
+    }
+
+    public set score(newScore){
+        this.playerScore = newScore;
+    }
+
+    public get score(){
+        return this.playerScore;
     }
 }
