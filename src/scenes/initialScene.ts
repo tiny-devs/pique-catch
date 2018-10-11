@@ -7,6 +7,7 @@ const blueColor = 0x4286f4;
 
 export class initialScene extends Phaser.Scene {
     private platforms: Phaser.GameObjects.Group;
+    private players: Phaser.GameObjects.Group;
     private player1: Player;
     private player2: Player;
     private playerOneTurn: boolean;   
@@ -31,6 +32,7 @@ export class initialScene extends Phaser.Scene {
                               [730, 100],
                               [410, 250]];
         this.platforms = this.add.group({ classType: Platform }); 
+        this.players = this.add.group({ classType: Player }); 
         this.playerOneTurn = true; 
     }
 
@@ -73,14 +75,12 @@ export class initialScene extends Phaser.Scene {
     }
 
     update(): void{
-        this.physics.collide(this.player1, this.platforms.getChildren());
-        this.physics.collide(this.player2, this.platforms.getChildren());
+        this.physics.collide(this.players.getChildren(), this.platforms.getChildren());        
         this.physics.overlap(this.player1, this.player2, this.playerCatch, null, this);  
         this.timerText.setText(' - ' + this.roundTime + ' - '); 
 
         this.physics.collide(this.switcher, this.platforms.getChildren());
-        this.physics.overlap(this.player1, this.switcher, this.getSwitcher, null, this); 
-        this.physics.overlap(this.player2, this.switcher, this.getSwitcher, null, this); 
+        this.physics.overlap(this.players.getChildren(), this.switcher, this.getSwitcher, null, this);         
     }
 
     private playerCatch(): void{
@@ -98,7 +98,7 @@ export class initialScene extends Phaser.Scene {
 
         this.player1.setPosition(100, 200);
         this.player2.setPosition(600, 300);
-        this.scoreText.setText('Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score);
+        this.updateScore();
     }
 
     private getSwitcher(player, switcher): void{
@@ -118,7 +118,7 @@ export class initialScene extends Phaser.Scene {
                                     this.itemPositions[this.itemPosition][1]);
         }
 
-        
+        this.roundTime = this.initalRoundTime;
     }
 
     private addPlatform(x, y): void{
@@ -141,7 +141,7 @@ export class initialScene extends Phaser.Scene {
     }
 
     private addPlayer(playernumber, x, y, tint): Player{
-        return new Player({
+        let player = new Player({
             scene: this,
             x: x,
             y: y,
@@ -149,12 +149,16 @@ export class initialScene extends Phaser.Scene {
             key: "player",
             playerNumber: playernumber
         });
+        this.players.add(player);
+        return player;
     }
 
     private tick(){
         this.roundTime--;
 
         if(this.roundTime < 0){
+            this.playerOneTurn ? this.player2.score++ : this.player1.score++;
+            this.updateScore();
             this.toggleTurn();
             this.roundTime = this.initalRoundTime;
         }
@@ -174,5 +178,9 @@ export class initialScene extends Phaser.Scene {
         }
 
         this.playerOneTurn = !this.playerOneTurn;
+    }
+
+    private updateScore(): void{
+        this.scoreText.setText('Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score);
     }
 }
