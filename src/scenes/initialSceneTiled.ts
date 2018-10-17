@@ -54,12 +54,10 @@ export class initialScene extends Phaser.Scene {
         this.back.setScale(2);
         this.children.bringToTop(this.walls);
 
-        console.log(this.map.objects);
         this.map.objects[0].objects.forEach(function (switcherPosition){
             this.itemPositions.push([switcherPosition.x * 2, switcherPosition.y * 2]);
         }.bind(this));
 
-        console.log(this.itemPositions);
 
         this.switcher = this.addSwitcher(this.itemPositions[this.itemPosition][0], 
                                         this.itemPositions[this.itemPosition][1]);
