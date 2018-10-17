@@ -17,8 +17,8 @@
           "url": "./src/assets/switch.png"
         },
 	{
-          "type": "file",
-          "key": "map",
+          "type": "tilemapTiledJSON",
+          "key": "map1",
           "url": "./src/assets/mapa1.json"
         },
 	{

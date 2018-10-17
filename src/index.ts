@@ -1,5 +1,5 @@
 import "phaser";
-import { initialScene } from "./scenes/initialScene";
+import { initialScene } from "./scenes/initialSceneTiled";
 
 /// <reference path="../../phaser.d.ts"/>
 
@@ -19,7 +19,8 @@ const config: GameConfig = {
     },
     input: {
         keyboard: true
-    }
+    },
+    pixelArt: true
 };
 
 export class Game extends Phaser.Game {

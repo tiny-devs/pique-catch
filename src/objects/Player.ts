@@ -12,6 +12,7 @@ export class Player extends Phaser.GameObjects.Sprite {
         this.initVars(params);
         this.initPhysics();
         this.initInput(); 
+        this.setDisplaySize(32,32);
         this.currentScene.add.existing(this);                       
     }
 
@@ -36,8 +37,19 @@ export class Player extends Phaser.GameObjects.Sprite {
         if (this.jumpKey.isDown && (this.body.onFloor() || this.body.touching.down))
         {
             this.body.setVelocityY(-330);
-        } 
-              
+        }
+
+        if (this.y > 600) {
+            this.playerScore--;
+            this.setPosition(600, 480);
+        }
+
+        if (this.x < -16) {
+            this.x = 815;
+        }
+        else if (this.x > 816) {
+            this.x = -15;
+        }
     }
 
     private initInput(): void{
@@ -58,7 +70,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     private initPhysics(): void{
         this.currentScene.physics.world.enable(this);  
         this.body.setBounce(0.1);
-        this.body.setCollideWorldBounds(true); 
+        this.body.setCollideWorldBounds(false); 
     } 
     
     private initVars(params): void{
