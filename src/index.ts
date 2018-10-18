@@ -5,6 +5,7 @@ import { initialScene } from "./scenes/initialSceneTiled";
 
 const config: GameConfig = {
     title: "Pique Catch",
+    parent: 'game',
     type: Phaser.AUTO,
     width: 800,
     height: 600,    
@@ -30,6 +31,5 @@ export class Game extends Phaser.Game {
 }
   
 window.onload = () => {
-    var game = new Game(config);    
+    var game = new Game(config);      
 };
-  
