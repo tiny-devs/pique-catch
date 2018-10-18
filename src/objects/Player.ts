@@ -3,9 +3,11 @@ export class Player extends Phaser.GameObjects.Sprite {
     private moveLeft: Phaser.Input.Keyboard.Key;
     private moveRight: Phaser.Input.Keyboard.Key;
     private currentScene: Phaser.Scene;
-    private playerColor: number;
-    private playerScore: number;
-    private playerNumber: number;
+    private color: number;
+    private _score: number;
+    private number: number;
+    private velocity: number;
+    private jumpVelocity: number;
 
     constructor(params) {
         super(params.scene, params.x, params.y, params.key);                          
@@ -23,11 +25,11 @@ export class Player extends Phaser.GameObjects.Sprite {
     update(): void{   
         if(this.moveLeft.isDown)
         {
-            this.body.setVelocityX(-160); 
+            this.body.setVelocityX(-this.velocity); 
         }
         else if(this.moveRight.isDown)
         {
-            this.body.setVelocityX(160); 
+            this.body.setVelocityX(this.velocity); 
         }
         else
         {
@@ -36,24 +38,24 @@ export class Player extends Phaser.GameObjects.Sprite {
         
         if (this.jumpKey.isDown && (this.body.onFloor() || this.body.touching.down))
         {
-            this.body.setVelocityY(-330);
+            this.body.setVelocityY(-this.jumpVelocity);
         }
 
-        if (this.y > 600) {
-            this.playerScore--;
+        if (this.y > this.scene.sys.canvas.width) {
+            this.score--;
             this.setPosition(600, 480);
         }
 
-        if (this.x < -16) {
-            this.x = 815;
+        if (this.x < -this.body.width) {
+            this.x = this.scene.sys.canvas.width;
         }
-        else if (this.x > 816) {
-            this.x = -15;
+        else if (this.x > this.scene.sys.canvas.width + this.body.width) {
+            this.x = -this.body.width;
         }
     }
 
     private initInput(): void{
-        if(this.playerNumber === 1)
+        if(this.number === 1)
         {
             this.jumpKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
             this.moveLeft = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -67,27 +69,29 @@ export class Player extends Phaser.GameObjects.Sprite {
         }
     }
 
-    private initPhysics(): void{
+    private initPhysics(): void{        
         this.currentScene.physics.world.enable(this);  
         this.body.setBounce(0.1);
         this.body.setCollideWorldBounds(false); 
     } 
     
     private initVars(params): void{
-        this.playerColor = params.tint;
+        this.color = params.tint;
         this.currentScene = params.scene; 
-        this.playerNumber = params.playerNumber;
+        this.number = params.number;
         this.setOrigin(0, 0);        
         this.setSize(27,40); // Tamanho para colisao
-        this.setTint(this.playerColor);
-        this.playerScore = 0;        
+        this.setTint(this.color);
+        this.score = 0;   
+        this.velocity = 160;     
+        this.jumpVelocity = 330;
     }
 
-    public set score(newScore){
-        this.playerScore = newScore;
+    public set score(newScore:number){
+        this._score = newScore;
     }
 
-    public get score(){
-        return this.playerScore;
+    public get score():number{
+        return this._score;
     }
 }

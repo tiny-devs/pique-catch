@@ -1,4 +1,3 @@
-import { Platform } from "../objects/Platform";
 import { Player } from "../objects/Player";
 import { Switcher } from "../objects/items/Switcher";
 
@@ -145,20 +144,20 @@ export class initialScene extends Phaser.Scene {
           });
     }
 
-    private addPlayer(playernumber, x, y, tint): Player{
+    private addPlayer(playerNumber, x, y, tint): Player{
         let player = new Player({
             scene: this,
             x: x,
             y: y,
             tint: tint,
             key: "player",
-            playerNumber: playernumber
+            number: playerNumber
         });
         this.players.add(player);
         return player;
     }
 
-    private tick(){
+    private tick(): void{
         this.roundTime--;
 
         if(this.roundTime < 0){
@@ -169,7 +168,7 @@ export class initialScene extends Phaser.Scene {
         }
     }
 
-    private toggleTurn(){
+    private toggleTurn(): void{
         if(this.playerOneTurn)
         {
             this.player1.setTint(blueColor);
