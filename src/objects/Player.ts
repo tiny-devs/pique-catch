@@ -14,7 +14,6 @@ export class Player extends Phaser.GameObjects.Sprite {
         this.initVars(params);
         this.initPhysics();
         this.initInput(); 
-        this.setDisplaySize(32,32);
         this.currentScene.add.existing(this);                       
     }
 
@@ -52,6 +51,10 @@ export class Player extends Phaser.GameObjects.Sprite {
         else if (this.x > this.scene.sys.canvas.width + this.body.width) {
             this.x = -this.body.width;
         }
+
+        if (this.y < -this.body.width ) {
+            this.body.setVelocityY(0);
+        }
     }
 
     private initInput(): void{
@@ -80,7 +83,7 @@ export class Player extends Phaser.GameObjects.Sprite {
         this.currentScene = params.scene; 
         this.number = params.number;
         this.setOrigin(0, 0);        
-        this.setSize(27,40); // Tamanho para colisao
+        this.setSize(16,16); // Tamanho para colisao
         this.setTint(this.color);
         this.score = 0;   
         this.velocity = 160;     
