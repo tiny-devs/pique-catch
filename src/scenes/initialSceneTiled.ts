@@ -16,10 +16,11 @@ export class initialScene extends Phaser.Scene {
     private switcher: Switcher;
     private itemPosition: number;
     private itemPositions: [] = [];
-    private map;
-    private walls;
-    private back;
-    private sky;
+    private map: Phaser.Tilemaps.Tilemap;
+    private walls: Phaser.Tilemaps.StaticTilemapLayer;
+    private tileset: Phaser.Tilemaps.Tileset;
+    private back: Phaser.Tilemaps.StaticTilemapLayer;
+    private sky: Phaser.Tilemaps.StaticTilemapLayer;
 
     constructor() {
         super({
@@ -43,13 +44,13 @@ export class initialScene extends Phaser.Scene {
 
     create(): void {   
         this.map = this.add.tilemap('map1');
-        let tileset = this.map.addTilesetImage('genericspritesheet','tileset', 16, 16);
-        this.walls = this.map.createStaticLayer('walls', tileset);
+        this.tileset = this.map.addTilesetImage('genericspritesheet','tileset', 16, 16);
+        this.walls = this.map.createStaticLayer('walls', this.tileset, 0, 0);
         this.walls.setCollisionBetween(1, 10000);
         this.walls.setScale(2);
-        this.sky = this.map.createStaticLayer('sky', tileset);
+        this.sky = this.map.createStaticLayer('sky', this.tileset, 0, 0);
         this.sky.setScale(2);
-        this.back = this.map.createStaticLayer('back', tileset);
+        this.back = this.map.createStaticLayer('back', this.tileset, 0, 0);
         this.back.setScale(2);
         this.children.bringToTop(this.walls);
 
