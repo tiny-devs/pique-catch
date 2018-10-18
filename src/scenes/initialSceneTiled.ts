@@ -47,15 +47,12 @@ export class initialScene extends Phaser.Scene {
         this.tileset = this.map.addTilesetImage('genericspritesheet','tileset', 16, 16);
         this.walls = this.map.createStaticLayer('walls', this.tileset, 0, 0);
         this.walls.setCollisionBetween(1, 10000);
-        this.walls.setScale(2);
         this.sky = this.map.createStaticLayer('sky', this.tileset, 0, 0);
-        this.sky.setScale(2);
         this.back = this.map.createStaticLayer('back', this.tileset, 0, 0);
-        this.back.setScale(2);
         this.children.bringToTop(this.walls);
 
         this.map.objects[0].objects.forEach(function (switcherPosition){
-            this.itemPositions.push([switcherPosition.x * 2, switcherPosition.y * 2]);
+            this.itemPositions.push([switcherPosition.x, switcherPosition.y]);
         }.bind(this));
 
 

@@ -6,7 +6,6 @@ export class Switcher extends Phaser.GameObjects.Sprite {
         this.currentScene = params.scene;
 
         this.initPhysics();
-        this.setDisplaySize(32,32);
         this.currentScene.add.existing(this);  
     }
 
