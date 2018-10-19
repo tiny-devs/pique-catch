@@ -61,13 +61,13 @@ export class Player extends Phaser.GameObjects.Sprite {
     private initInput(): void{
         if(this.number === 1)
         {
-            this.jumpKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
+            this.jumpKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
             this.moveLeft = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
             this.moveRight = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         }
         else
         {
-            this.jumpKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.NUMPAD_ZERO);
+            this.jumpKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
             this.moveLeft = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
             this.moveRight = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT); 
         }
