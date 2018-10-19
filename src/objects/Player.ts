@@ -8,13 +8,14 @@ export class Player extends Phaser.GameObjects.Sprite {
     private number: number;
     private velocity: number;
     private jumpVelocity: number;
+    private spawn: number[];
 
     constructor(params) {
-        super(params.scene, params.x, params.y, params.key);                          
+        super(params.scene, params.x, params.y, params.key);
         this.initVars(params);
         this.initPhysics();
-        this.initInput(); 
-        this.currentScene.add.existing(this);                       
+        this.initInput();
+        this.currentScene.add.existing(this);
     }
 
     preUpdate(): void{
@@ -42,7 +43,7 @@ export class Player extends Phaser.GameObjects.Sprite {
 
         if (this.y > this.scene.sys.canvas.width) {
             this.score--;
-            this.setPosition(600, 480);
+            this.setPosition(this.spawn[0], this.spawn[1]);
         }
 
         if (this.x < -this.body.width) {
@@ -88,6 +89,7 @@ export class Player extends Phaser.GameObjects.Sprite {
         this.score = 0;   
         this.velocity = 160;     
         this.jumpVelocity = 330;
+        this.spawn = [params.x, params.y];
     }
 
     public set score(newScore:number){

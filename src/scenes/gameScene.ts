@@ -52,8 +52,8 @@ export class gameScene extends Phaser.Scene {
                                         this.itemPositions[this.itemPosition][1]);
 
         this.roundTime = this.initalRoundTime;
-        this.player1 = this.addPlayer(1, 10, 10, redColor);
-        this.player2 = this.addPlayer(2, 600, 300, blueColor);
+        this.player1 = this.addPlayer(1, 150, 290, redColor);
+        this.player2 = this.addPlayer(2, 650, 290, blueColor);
         this.scoreText = this.add.text(
             10,10,
             'Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score,
@@ -100,8 +100,8 @@ export class gameScene extends Phaser.Scene {
 
         this.toggleTurn();
 
-        this.player1.setPosition(100, 200);
-        this.player2.setPosition(600, 300);
+        this.player1.setPosition(150, 290);
+        this.player2.setPosition(650, 290);
         this.updateScore();
     }
 
