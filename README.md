@@ -16,7 +16,7 @@ npm run dev
 
 - Move Right: D
 
-- Jump: J
+- Jump: W
 
 ### Player 2
 
@@ -24,5 +24,5 @@ npm run dev
 
 - Move Right: Cursor RIGHT
 
-- Jump: Numpad 0
+- Jump: UP
 
