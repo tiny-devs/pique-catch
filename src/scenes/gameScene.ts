@@ -4,7 +4,7 @@ import { Switcher } from "../objects/items/Switcher";
 const redColor = 0xff0000;
 const blueColor = 0x4286f4;
 
-export class initialScene extends Phaser.Scene {
+export class gameScene extends Phaser.Scene {
     private players: Phaser.GameObjects.Group;
     private player1: Player;
     private player2: Player;
@@ -24,7 +24,7 @@ export class initialScene extends Phaser.Scene {
 
     constructor() {
         super({
-          key: "initialScene"
+          key: "gameScene"
         });
     }
 
@@ -32,14 +32,6 @@ export class initialScene extends Phaser.Scene {
         this.itemPosition = 0;
         this.players = this.add.group({ classType: Player }); 
         this.playerOneTurn = true; 
-    }
-
-    preload(): void {
-        this.load.pack(
-            "preload",
-            "./src/assets/pack.json",
-            "preload"
-          );
     }
 
     create(): void {   

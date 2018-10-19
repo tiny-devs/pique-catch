@@ -1,5 +1,7 @@
 import "phaser";
-import { initialScene } from "./scenes/initialSceneTiled";
+import { loadingScene } from "./scenes/loadingScene";
+import { menuScene } from "./scenes/menuScene";
+import { gameScene } from "./scenes/gameScene";
 
 /// <reference path="../../phaser.d.ts"/>
 
@@ -10,7 +12,7 @@ const config: GameConfig = {
     width: 800,
     height: 600,    
     backgroundColor: '#85b5e1',        
-    scene: [initialScene],
+    scene: [loadingScene, menuScene, gameScene],
     physics: {
         default: 'arcade',
         arcade: {
@@ -19,7 +21,8 @@ const config: GameConfig = {
         }
     },
     input: {
-        keyboard: true
+        keyboard: true,
+        mouse: true
     },
     pixelArt: true
 };
