@@ -8,7 +8,7 @@ export class loadingScene extends Phaser.Scene {
     }
          
     preload(): void {
-        this.load.image("logo", "/src/assets/logo.png");
+        this.load.image("logo", "src/assets/logo.png");
         this.cameras.main.setBackgroundColor(0x232426);
         this.loadingBar = this.add.graphics();        
 
