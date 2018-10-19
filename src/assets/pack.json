@@ -3,6 +3,11 @@
       "files": [
         {
           "type": "image",
+          "key": "playButton",
+          "url": "./src/assets/playButton.png"
+        },
+        {
+          "type": "image",
           "key": "player",
           "url": "./src/assets/phaser-dude.png"
         },
