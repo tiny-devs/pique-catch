@@ -9,6 +9,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     private velocity: number;
     private jumpVelocity: number;
     private spawn: number[];
+    private idText: Phaser.GameObjects.Text;
 
     constructor(params) {
         super(params.scene, params.x, params.y, params.key);
@@ -23,6 +24,8 @@ export class Player extends Phaser.GameObjects.Sprite {
     }
      
     update(): void{   
+        this.idText.setPosition(this.x-this.width, this.y-this.height-5)
+
         if(this.moveLeft.isDown)
         {
             this.body.setVelocityX(-this.velocity); 
@@ -90,6 +93,14 @@ export class Player extends Phaser.GameObjects.Sprite {
         this.velocity = 160;     
         this.jumpVelocity = 330;
         this.spawn = [params.x, params.y];
+        this.idText = params.scene.add.text(
+            this.x,this.y,
+            "Player " + this.number,
+            {
+              fontFamily: "Connection",
+              fontSize: 16
+            }
+        );
     }
 
     public set score(newScore:number){
