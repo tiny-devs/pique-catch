@@ -32,6 +32,11 @@ export class gameScene extends Phaser.Scene {
         this.itemPosition = 0;
         this.players = this.add.group({ classType: Player }); 
         this.playerOneTurn = true; 
+        this.sound.add('jump');
+        this.sound.add('itemcatch');
+        this.sound.add('playercatch');
+        this.sound.add('switchturn');
+        this.sound.add('dead');
     }
 
     create(): void {   
@@ -88,6 +93,7 @@ export class gameScene extends Phaser.Scene {
     }
 
     private playerCatch(): void{
+        this.sound.play('playercatch');
 
         if(this.playerOneTurn)
         {
@@ -159,6 +165,8 @@ export class gameScene extends Phaser.Scene {
     }
 
     private toggleTurn(): void{
+        this.sound.play('switchturn');
+
         if(this.playerOneTurn)
         {
             this.player1.setTint(blueColor);

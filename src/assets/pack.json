@@ -21,16 +21,41 @@
           "key": "item",
           "url": "./src/assets/switch.png"
         },
-	{
+		{
           "type": "tilemapTiledJSON",
           "key": "map1",
           "url": "./src/assets/mapa1.json"
         },
-	{
+		{
           "type": "image",
           "key": "tileset",
           "url": "./src/assets/genericspritesheet.png"
-        }
+        },
+		{
+		  "type": "audio",
+          "key": "jump",
+          "url": "./src/assets/jump.mp3"
+		},
+		{
+		  "type": "audio",
+          "key": "itemcatch",
+          "url": "./src/assets/itemcatch.mp3"
+		},
+		{
+		  "type": "audio",
+          "key": "playercatch",
+          "url": "./src/assets/playercatch.mp3"
+		},
+		{
+		  "type": "audio",
+          "key": "switchturn",
+          "url": "./src/assets/switchturn.mp3"
+		},
+		{
+		  "type": "audio",
+          "key": "dead",
+          "url": "./src/assets/dead.mp3"
+		}
       ]
     }
   }

@@ -42,9 +42,11 @@ export class Player extends Phaser.GameObjects.Sprite {
         if (this.jumpKey.isDown && (this.body.onFloor() || this.body.touching.down))
         {
             this.body.setVelocityY(-this.jumpVelocity);
+            this.scene.sound.play('jump');
         }
 
         if (this.y > this.scene.sys.canvas.width) {
+            this.scene.sound.play('dead');
             this.score--;
             this.setPosition(this.spawn[0], this.spawn[1]);
         }
