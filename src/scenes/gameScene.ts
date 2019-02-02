@@ -20,7 +20,7 @@ export class gameScene extends Phaser.Scene {
     private walls: Phaser.Tilemaps.StaticTilemapLayer;
     private tileset: Phaser.Tilemaps.Tileset;
     private back: Phaser.Tilemaps.StaticTilemapLayer;
-    private sky: Phaser.Tilemaps.StaticTilemapLayer;
+    private clouds: Phaser.GameObjects.TileSprite;
 
     constructor() {
         super({
@@ -39,12 +39,22 @@ export class gameScene extends Phaser.Scene {
         this.sound.add('dead');
     }
 
-    create(): void {   
+    create(): void {
+        const cloudCachedKey = this.textures.get('clouds');
+        const cloudCachedImage = cloudCachedKey.getSourceImage();
+        this.clouds = this.add.tileSprite(
+            cloudCachedImage.width + 100,
+            this.game.canvas.height - cloudCachedImage.height * 1.5,
+            cloudCachedImage.width,
+            cloudCachedImage.height,
+            'clouds'
+        );
+        this.clouds.setScale(3);
+
         this.map = this.add.tilemap('map1');
         this.tileset = this.map.addTilesetImage('genericspritesheet','tileset', 16, 16);
         this.walls = this.map.createStaticLayer('walls', this.tileset, 0, 0);
         this.walls.setCollisionBetween(1, 10000);
-        this.sky = this.map.createStaticLayer('sky', this.tileset, 0, 0);
         this.back = this.map.createStaticLayer('back', this.tileset, 0, 0);
         this.children.bringToTop(this.walls);
 
@@ -80,7 +90,13 @@ export class gameScene extends Phaser.Scene {
         this.time.addEvent({ delay: 1000, callback: this.tick, callbackScope: this, loop: true });
     }
 
+    cloudSpawner(): void{
+        var cloud = this.add.sprite(Phaser.Math.Between(-65, 0), Phaser.Math.Between(0, this.game.canvas.width), 'smallclouds');
+        cloud.setScale(2);
+    }
+
     update(): void{
+        this.clouds.tilePositionX -= 0.4;
         this.timerText.setText(' - ' + this.roundTime + ' - ');
 
         this.physics.collide(this.players.getChildren(), this.walls);

@@ -18,6 +18,21 @@
         },
 		{
           "type": "image",
+          "key": "clouds",
+          "url": "./src/assets/clouds.png"
+        },
+		{
+          "type": "spritesheet",
+          "key": "smallclouds",
+          "url": "./src/assets/smallclouds.png",
+		  "frameConfig": {
+			  "frameWidth": 64,
+			  "frameHeight": 16,
+			  "endFrame": 3
+		  }
+        },
+		{
+          "type": "image",
           "key": "item",
           "url": "./src/assets/switch.png"
         },
