@@ -21,6 +21,8 @@ export class gameScene extends Phaser.Scene {
     private tileset: Phaser.Tilemaps.Tileset;
     private back: Phaser.Tilemaps.StaticTilemapLayer;
     private clouds: Phaser.GameObjects.TileSprite;
+    private cloudSpawnDelay: number = 1000;
+    private smallClouds: any[] = [];
 
     constructor() {
         super({
@@ -88,15 +90,37 @@ export class gameScene extends Phaser.Scene {
         );
 
         this.time.addEvent({ delay: 1000, callback: this.tick, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: this.cloudSpawnDelay, callback: this.cloudSpawner, callbackScope: this, loop: true });
     }
 
     cloudSpawner(): void{
-        var cloud = this.add.sprite(Phaser.Math.Between(-65, 0), Phaser.Math.Between(0, this.game.canvas.width), 'smallclouds');
-        cloud.setScale(2);
+        this.cloudSpawnDelay = Phaser.Math.Between(500, 2500);
+        this.smallClouds.push(
+            this.cloudSetup()
+        );
+    }
+
+    cloudSetup(): any{
+        let cloud;
+        cloud = this.add.sprite(
+            Phaser.Math.Between(-130, -65), 
+            Phaser.Math.Between(0, this.game.canvas.height), 
+            'smallclouds',
+            Phaser.Math.Between(0, 3)
+            ).setScale(2);
+        cloud.speed = Phaser.Math.Between(1, 3);
+        return cloud;
     }
 
     update(): void{
-        this.clouds.tilePositionX -= 0.4;
+        this.smallClouds.forEach(function(cloud, index, object) {
+            cloud.x += cloud.speed;
+            if (cloud.x > this.game.canvas.width) {
+                object.splice(index, 1);
+            }
+        }.bind(this));
+
+        this.clouds.tilePositionX -= 0.3;
         this.timerText.setText(' - ' + this.roundTime + ' - ');
 
         this.physics.collide(this.players.getChildren(), this.walls);
