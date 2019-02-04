@@ -115,7 +115,8 @@ export class gameScene extends Phaser.Scene {
     update(): void{
         this.smallClouds.forEach(function(cloud, index, object) {
             cloud.x += cloud.speed;
-            if (cloud.x > this.game.canvas.width) {
+            if (cloud.x > this.game.canvas.width+130) {
+                cloud.destroy();
                 object.splice(index, 1);
             }
         }.bind(this));
