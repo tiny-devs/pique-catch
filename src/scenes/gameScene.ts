@@ -1,229 +1,260 @@
-import { Player } from "../objects/Player";
-import { Switcher } from "../objects/items/Switcher";
+import Phaser from "phaser";
 
-const redColor = 0xff0000;
-const blueColor = 0x4286f4;
+interface RemotePlayer {
+    sprite: Phaser.GameObjects.Sprite;
+    label: Phaser.GameObjects.Text;
+    tx: number;
+    ty: number;
+    flip: boolean;
+}
 
 export class gameScene extends Phaser.Scene {
-    private players: Phaser.GameObjects.Group;
-    private player1: Player;
-    private player2: Player;
-    private playerOneTurn: boolean;   
-    private scoreText: Phaser.GameObjects.Text;
-    private timerText: Phaser.GameObjects.Text;
-    private roundTime: number;
-    private initalRoundTime: number = 15;
-    private switcher: Switcher;
-    private itemPosition: number;
-    private itemPositions: [] = [];
+    // world
     private map: Phaser.Tilemaps.Tilemap;
-    private walls: Phaser.Tilemaps.StaticTilemapLayer;
+    private walls: Phaser.Tilemaps.TilemapLayer;
     private tileset: Phaser.Tilemaps.Tileset;
-    private back: Phaser.Tilemaps.StaticTilemapLayer;
+    private back: Phaser.Tilemaps.TilemapLayer;
     private clouds: Phaser.GameObjects.TileSprite;
-    private cloudSpawnDelay: number = 1000;
-    private smallClouds: any[] = [];
+
+    // local player
+    private localPlayer: Phaser.Physics.Arcade.Sprite;
+    private localLabel: Phaser.GameObjects.Text;
+    private cursors: Phaser.Input.Keyboard.CursorKeys;
+    private keyA: Phaser.Input.Keyboard.Key;
+    private keyD: Phaser.Input.Keyboard.Key;
+    private keyW: Phaser.Input.Keyboard.Key;
+    private keySpace: Phaser.Input.Keyboard.Key;
+    private readonly speed: number = 160;
+    private readonly jump: number = 330;
+    private spawn: number[] = [400, 200];
+
+    // network
+    private ws: WebSocket;
+    private myId: number = null;
+    private myName: string = "Player";
+    private remotes: { [id: number]: RemotePlayer } = {};
+    private lastSent: number = 0;
+    private ping: number = 0;
+
+    // hud
+    private hud: Phaser.GameObjects.Text;
 
     constructor() {
-        super({
-          key: "gameScene"
-        });
-    }
-
-    init(): void{
-        this.itemPosition = 0;
-        this.players = this.add.group({ classType: Player }); 
-        this.playerOneTurn = true; 
-        this.sound.add('jump');
-        this.sound.add('itemcatch');
-        this.sound.add('playercatch');
-        this.sound.add('switchturn');
-        this.sound.add('dead');
+        super({ key: "gameScene" });
     }
 
     create(): void {
-        const cloudCachedKey = this.textures.get('clouds');
-        const cloudCachedImage = cloudCachedKey.getSourceImage();
+        this.myName = (window as any).PLAYER_NAME || "Player";
+
+        // --- background clouds
+        const cloudImage = this.textures.get('clouds').getSourceImage();
         this.clouds = this.add.tileSprite(
-            cloudCachedImage.width + 100,
-            this.game.canvas.height - cloudCachedImage.height * 1.5,
-            cloudCachedImage.width,
-            cloudCachedImage.height,
+            cloudImage.width + 100,
+            this.game.canvas.height - cloudImage.height * 1.5,
+            cloudImage.width,
+            cloudImage.height,
             'clouds'
-        );
-        this.clouds.setScale(3);
+        ).setScale(3).setDepth(0);
 
-        this.map = this.add.tilemap('map1');
-        this.tileset = this.map.addTilesetImage('genericspritesheet','tileset', 16, 16);
-        this.walls = this.map.createStaticLayer('walls', this.tileset, 0, 0);
+        // --- tilemap
+        this.map = this.make.tilemap({ key: 'map1' });
+        this.tileset = this.map.addTilesetImage('genericspritesheet', 'tileset', 16, 16);
+        this.back = this.map.createLayer('back', this.tileset, 0, 0).setDepth(1);
+        this.walls = this.map.createLayer('walls', this.tileset, 0, 0).setDepth(2);
         this.walls.setCollisionBetween(1, 10000);
-        this.back = this.map.createStaticLayer('back', this.tileset, 0, 0);
-        this.children.bringToTop(this.walls);
 
-        this.map.objects[0].objects.forEach(function (switcherPosition){
-            this.itemPositions.push([switcherPosition.x, switcherPosition.y]);
-        }.bind(this));
+        // --- local player
+        this.localPlayer = this.physics.add.sprite(this.spawn[0], this.spawn[1], 'player');
+        this.localPlayer.setOrigin(0, 0).setDepth(10);
+        this.localPlayer.body.setBounce(0.1);
+        this.physics.add.collider(this.localPlayer, this.walls);
+        this.localLabel = this.makeLabel(this.myName).setDepth(11);
 
+        // --- input
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-        this.switcher = this.addSwitcher(this.itemPositions[this.itemPosition][0], 
-                                        this.itemPositions[this.itemPosition][1]);
+        // --- HUD (fps + ping)
+        this.hud = this.add.text(790, 8, '', {
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            color: '#ffffff',
+            align: 'right'
+        }).setOrigin(1, 0).setDepth(1000);
+        this.hud.setStroke('#000000', 3);
 
-        this.roundTime = this.initalRoundTime;
-        this.player1 = this.addPlayer(1, 150, 290, redColor);
-        this.player2 = this.addPlayer(2, 650, 290, blueColor);
-        this.scoreText = this.add.text(
-            10,10,
-            'Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score,
-            {
-              fontFamily: "Connection",
-              fontSize: 20
+        // --- networking
+        this.connect();
+
+        // ping every 2s
+        this.time.addEvent({
+            delay: 2000, loop: true, callback: () => {
+                this.send({ t: 'ping', ts: this.now() });
             }
-          );
-
-        this.timerText = this.add.text(
-            350,10,
-            ' - ' + this.roundTime + ' - ',
-            {
-                fontFamily: "Connection",
-                fontSize: 20
-            }
-        );
-
-        this.time.addEvent({ delay: 1000, callback: this.tick, callbackScope: this, loop: true });
-        this.time.addEvent({ delay: this.cloudSpawnDelay, callback: this.cloudSpawner, callbackScope: this, loop: true });
-    }
-
-    cloudSpawner(): void{
-        this.cloudSpawnDelay = Phaser.Math.Between(500, 2500);
-        this.smallClouds.push(
-            this.cloudSetup()
-        );
-    }
-
-    cloudSetup(): any{
-        let cloud;
-        cloud = this.add.sprite(
-            Phaser.Math.Between(-130, -65), 
-            Phaser.Math.Between(0, this.game.canvas.height), 
-            'smallclouds',
-            Phaser.Math.Between(0, 3)
-            ).setScale(2);
-        cloud.speed = Phaser.Math.Between(1, 3);
-        return cloud;
-    }
-
-    update(): void{
-        this.smallClouds.forEach(function(cloud, index, object) {
-            cloud.x += cloud.speed;
-            if (cloud.x > this.game.canvas.width+130) {
-                cloud.destroy();
-                object.splice(index, 1);
-            }
-        }.bind(this));
-
-        this.clouds.tilePositionX -= 0.3;
-        this.timerText.setText(' - ' + this.roundTime + ' - ');
-
-        this.physics.collide(this.players.getChildren(), this.walls);
-        this.physics.collide(this.switcher, this.walls);
-        
-        this.physics.overlap(this.player1, this.player2, this.playerCatch, null, this);
-        this.physics.overlap(this.players.getChildren(), this.switcher, this.getSwitcher, null, this);
-
-        this.updateScore();
-    }
-
-    private playerCatch(): void{
-        this.sound.play('playercatch');
-
-        if(this.playerOneTurn)
-        {
-            this.player1.score++;
-        }
-        else
-        {
-            this.player2.score++;
-        }
-
-        this.toggleTurn();
-
-        this.player1.setPosition(150, 290);
-        this.player2.setPosition(650, 290);
-        this.updateScore();
-    }
-
-    private getSwitcher(player, switcher): void{
-        this.toggleTurn();
-
-        if(this.itemPosition + 1 < this.itemPositions.length){
-            this.itemPosition++;
-
-            switcher.changeLocation(this.itemPositions[this.itemPosition][0],
-                                    this.itemPositions[this.itemPosition][1]);
-        }
-        else {
-            
-            this.itemPosition = 0;
-
-            switcher.changeLocation(this.itemPositions[this.itemPosition][0],
-                                    this.itemPositions[this.itemPosition][1]);
-        }
-
-        this.roundTime = this.initalRoundTime;
-    }
-
-    private addSwitcher(x, y): Switcher{
-        return new Switcher({
-            scene: this,
-            x: x,
-            y: y,
-            key: 'item'
-          });
-    }
-
-    private addPlayer(playerNumber, x, y, tint): Player{
-        let player = new Player({
-            scene: this,
-            x: x,
-            y: y,
-            tint: tint,
-            key: "player",
-            number: playerNumber
         });
-        this.players.add(player);
-        return player;
+
+        // clean up the socket if the scene is torn down
+        this.events.once('shutdown', () => { if (this.ws) this.ws.close(); });
     }
 
-    private tick(): void{
-        this.roundTime--;
+    update(time: number): void {
+        this.clouds.tilePositionX -= 0.3;
 
-        if(this.roundTime < 0){
-            this.playerOneTurn ? this.player2.score++ : this.player1.score++;
-            this.updateScore();
-            this.toggleTurn();
-            this.roundTime = this.initalRoundTime;
+        this.handleLocalMovement();
+        this.followLabel(this.localLabel, this.localPlayer.x, this.localPlayer.y);
+        this.interpolateRemotes();
+
+        // send our state ~20x/second
+        if (time - this.lastSent > 50) {
+            this.lastSent = time;
+            this.send({
+                t: 'move',
+                x: Math.round(this.localPlayer.x),
+                y: Math.round(this.localPlayer.y),
+                flip: this.localPlayer.flipX
+            });
+        }
+
+        const fps = Math.round((this.game.loop as any).actualFps);
+        this.hud.setText('FPS ' + fps + '\nPing ' + this.ping + 'ms');
+    }
+
+    // ---------------------------------------------------------------- movement
+    private handleLocalMovement(): void {
+        const body: any = this.localPlayer.body;
+        const left = this.cursors.left.isDown || this.keyA.isDown;
+        const right = this.cursors.right.isDown || this.keyD.isDown;
+        const jump = this.cursors.up.isDown || this.keyW.isDown || this.keySpace.isDown;
+        const onGround = body.onFloor() || body.blocked.down || body.touching.down;
+
+        if (left) {
+            this.localPlayer.setVelocityX(-this.speed);
+            this.localPlayer.flipX = true;
+        } else if (right) {
+            this.localPlayer.setVelocityX(this.speed);
+            this.localPlayer.flipX = false;
+        } else {
+            this.localPlayer.setVelocityX(0);
+        }
+
+        if (jump && onGround) {
+            this.localPlayer.setVelocityY(-this.jump);
+            this.sound.play('jump');
+        }
+
+        // wrap horizontally
+        const w = this.game.canvas.width;
+        if (this.localPlayer.x < -16) this.localPlayer.x = w;
+        else if (this.localPlayer.x > w + 16) this.localPlayer.x = -16;
+
+        // respawn if it falls off the world
+        if (this.localPlayer.y > this.game.canvas.height + 40) {
+            this.localPlayer.setPosition(this.spawn[0], this.spawn[1]);
+            this.localPlayer.setVelocity(0, 0);
         }
     }
 
-    private toggleTurn(): void{
-        this.sound.play('switchturn');
-
-        if(this.playerOneTurn)
-        {
-            this.player1.setTint(blueColor);
-            this.player2.setTint(redColor);
+    private interpolateRemotes(): void {
+        for (const id in this.remotes) {
+            const r = this.remotes[id];
+            r.sprite.x += (r.tx - r.sprite.x) * 0.25;
+            r.sprite.y += (r.ty - r.sprite.y) * 0.25;
+            r.sprite.flipX = r.flip;
+            this.followLabel(r.label, r.sprite.x, r.sprite.y);
         }
-        else
-        {
-            this.player2.setTint(blueColor);
-            this.player1.setTint(redColor);
-            
-        }
-
-        this.playerOneTurn = !this.playerOneTurn;
     }
 
-    private updateScore(): void{
-        this.scoreText.setText('Player1: '+this.player1.score+'\nPlayer2: '+this.player2.score);
+    // ----------------------------------------------------------------- network
+    private connect(): void {
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        try {
+            this.ws = new WebSocket(proto + '//' + location.host);
+        } catch (e) {
+            return;
+        }
+
+        this.ws.onopen = () => {
+            this.send({ t: 'join', name: this.myName });
+        };
+
+        this.ws.onmessage = (ev: MessageEvent) => {
+            let msg: any;
+            try { msg = JSON.parse(ev.data); } catch (e) { return; }
+
+            if (msg.t === 'welcome') {
+                this.myId = msg.id;
+                this.localPlayer.setTint(msg.color);
+                this.localPlayer.setPosition(msg.x, msg.y);
+                this.spawn = [msg.x, msg.y];
+                if (this.remotes[this.myId]) this.destroyRemote(this.myId);
+            } else if (msg.t === 'state') {
+                this.applyState(msg.players);
+            } else if (msg.t === 'pong') {
+                this.ping = Math.round(this.now() - msg.ts);
+            }
+        };
+    }
+
+    private applyState(list: any[]): void {
+        const seen: { [id: number]: boolean } = {};
+
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            if (this.myId !== null && p.id === this.myId) continue;
+            seen[p.id] = true;
+
+            let r = this.remotes[p.id];
+            if (!r) {
+                const sprite = this.add.sprite(p.x, p.y, 'player')
+                    .setOrigin(0, 0).setTint(p.color).setDepth(10);
+                const label = this.makeLabel(p.name).setDepth(11);
+                r = this.remotes[p.id] = { sprite, label, tx: p.x, ty: p.y, flip: !!p.flip };
+            }
+            r.tx = p.x;
+            r.ty = p.y;
+            r.flip = !!p.flip;
+            if (r.label.text !== p.name) r.label.setText(p.name);
+        }
+
+        // remove players that left
+        for (const id in this.remotes) {
+            if (!seen[id]) this.destroyRemote(Number(id));
+        }
+    }
+
+    private destroyRemote(id: number): void {
+        const r = this.remotes[id];
+        if (!r) return;
+        r.sprite.destroy();
+        r.label.destroy();
+        delete this.remotes[id];
+    }
+
+    private send(obj: any): void {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(obj));
+        }
+    }
+
+    // ------------------------------------------------------------------ helpers
+    private makeLabel(name: string): Phaser.GameObjects.Text {
+        const label = this.add.text(0, 0, name, {
+            fontFamily: 'monospace',
+            fontSize: '13px',
+            color: '#ffffff'
+        }).setOrigin(0.5, 1);
+        label.setStroke('#000000', 3);
+        return label;
+    }
+
+    private followLabel(label: Phaser.GameObjects.Text, x: number, y: number): void {
+        label.setPosition(x + 8, y - 4);
+    }
+
+    private now(): number {
+        return (typeof performance !== 'undefined') ? performance.now() : Date.now();
     }
 }

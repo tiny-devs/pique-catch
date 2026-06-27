@@ -1,20 +1,17 @@
-import "phaser";
+import Phaser from "phaser";
 import { loadingScene } from "./scenes/loadingScene";
-import { menuScene } from "./scenes/menuScene";
 import { gameScene } from "./scenes/gameScene";
 
-/// <reference path="../../phaser.d.ts"/>
-
-const config: GameConfig = {
+const config: Phaser.Types.Core.GameConfig = {
     title: "Pique Catch",
-    parent: 'game',
+    parent: "game",
     type: Phaser.AUTO,
     width: 800,
-    height: 600,    
-    backgroundColor: '#85b5e1',        
-    scene: [loadingScene, menuScene, gameScene],
+    height: 600,
+    backgroundColor: "#85b5e1",
+    scene: [loadingScene, gameScene],
     physics: {
-        default: 'arcade',
+        default: "arcade",
         arcade: {
             gravity: { y: 300 },
             debug: false
@@ -28,11 +25,13 @@ const config: GameConfig = {
 };
 
 export class Game extends Phaser.Game {
-    constructor(config: GameConfig) {
-      super(config);      
+    constructor(config: Phaser.Types.Core.GameConfig) {
+        super(config);
     }
 }
-  
-window.onload = () => {
-    var game = new Game(config);      
+
+// Called by index.html after the player types a nickname.
+(window as any).startGame = (nickname: string) => {
+    (window as any).PLAYER_NAME = nickname;
+    return new Game(config);
 };

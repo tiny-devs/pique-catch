@@ -1,0 +1,41 @@
+{
+    "preload": {
+      "files": [
+        {
+          "type": "image",
+          "key": "player",
+          "url": "assets/phaser-dude.png"
+        },
+        {
+          "type": "image",
+          "key": "clouds",
+          "url": "assets/clouds.png"
+        },
+        {
+          "type": "spritesheet",
+          "key": "smallclouds",
+          "url": "assets/smallclouds.png",
+          "frameConfig": {
+            "frameWidth": 64,
+            "frameHeight": 16,
+            "endFrame": 3
+          }
+        },
+        {
+          "type": "tilemapTiledJSON",
+          "key": "map1",
+          "url": "assets/mapa1.json"
+        },
+        {
+          "type": "image",
+          "key": "tileset",
+          "url": "assets/genericspritesheet.png"
+        },
+        {
+          "type": "audio",
+          "key": "jump",
+          "url": "assets/jump.mp3"
+        }
+      ]
+    }
+  }
