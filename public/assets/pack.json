@@ -35,6 +35,21 @@
           "type": "audio",
           "key": "jump",
           "url": "assets/jump.mp3"
+        },
+        {
+          "type": "audio",
+          "key": "playercatch",
+          "url": "assets/playercatch.mp3"
+        },
+        {
+          "type": "audio",
+          "key": "switchturn",
+          "url": "assets/switchturn.mp3"
+        },
+        {
+          "type": "audio",
+          "key": "dead",
+          "url": "assets/dead.mp3"
         }
       ]
     }

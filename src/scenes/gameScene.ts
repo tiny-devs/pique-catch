@@ -149,6 +149,9 @@ export class gameScene extends Phaser.Scene {
             delay: 2000, loop: true, callback: () => this.send({ t: 'ping', ts: this.now() })
         });
         this.events.once('shutdown', () => { if (this.ws) this.ws.close(); });
+
+        // debug handle (used by automated tests; harmless in prod)
+        (window as any).__scene = this;
     }
 
     update(time: number): void {
@@ -195,7 +198,7 @@ export class gameScene extends Phaser.Scene {
 
         if (jump && onGround) {
             this.localPlayer.setVelocityY(-this.jumpPower);
-            this.sound.play('jump');
+            this.safePlay('jump');
         }
 
         const w = this.game.canvas.width;
@@ -248,6 +251,8 @@ export class gameScene extends Phaser.Scene {
 
         this.physics.pause();
         this.setHudVisible(false);
+        // gray sky too (the grayscale FX only touches game objects, not the clear color)
+        cam.setBackgroundColor(0x8a8a8a);
 
         // schedule recovery first, so the game always unfreezes even if something throws
         this.time.delayedCall(2500, () => this.endCatchCinematic());
@@ -286,6 +291,7 @@ export class gameScene extends Phaser.Scene {
 
         this.time.delayedCall(340, () => {
             if ((cam as any).postFX) (cam as any).postFX.clear();
+            cam.setBackgroundColor(0x85b5e1);
             cam.setZoom(1);
             cam.centerOn(400, 300);
             this.physics.resume();
@@ -328,15 +334,15 @@ export class gameScene extends Phaser.Scene {
                 this.phase = msg.phase;
                 this.applyState(msg.players);
             } else if (msg.t === 'round') {
-                this.sound.play('switchturn');
+                this.safePlay('switchturn');
                 const me = msg.marked === this.myId;
                 this.showAnnounce(me ? "You're IT! Run!" : 'Catch ' + msg.name + '!');
             } else if (msg.t === 'roundEnd') {
                 if (msg.reason === 'caught') {
-                    this.sound.play('playercatch');
+                    this.safePlay('playercatch');
                     this.startCatchCinematic(msg);
                 } else {
-                    this.sound.play('dead');
+                    this.safePlay('dead');
                     const me = msg.winner === this.myId;
                     this.showAnnounce((me ? 'You' : msg.name) + ' survived! +1');
                 }
@@ -438,6 +444,13 @@ export class gameScene extends Phaser.Scene {
 
     private followLabel(label: Phaser.GameObjects.Text, x: number, y: number): void {
         label.setPosition(x + 8, y - 4);
+    }
+
+    // never let a missing/locked audio key abort game logic (e.g. the cinematic)
+    private safePlay(key: string): void {
+        try {
+            if (this.cache.audio.exists(key)) this.sound.play(key);
+        } catch (e) { /* audio not ready — ignore */ }
     }
 
     private now(): number {
