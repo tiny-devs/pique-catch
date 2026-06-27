@@ -1,4 +1,4 @@
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 
 export class loadingScene extends Phaser.Scene {
     private loadingBar: Phaser.GameObjects.Graphics;

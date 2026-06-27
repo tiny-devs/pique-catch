@@ -99,9 +99,15 @@
       function start() {
         var name = (input.value || '').trim();
         if (!name) { input.focus(); return; }
-        login.style.display = 'none';
-        if (isTouch) touch.style.display = 'block';
-        window.startGame(name); // exposed by the bundle (src/index.ts)
+        if (typeof window.startGame === 'function') {
+          window.startGame(name); // exposed by the bundle (src/index.ts)
+        } else {
+          // bundle still loading — queue it; index.ts starts as soon as it loads
+          window.__pendingName = name;
+          var btn = document.getElementById('play');
+          btn.textContent = 'Loading…';
+          btn.disabled = true;
+        }
       }
 
       document.getElementById('play').addEventListener('click', start);

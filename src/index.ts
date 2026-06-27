@@ -1,32 +1,31 @@
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import { loadingScene } from "./scenes/loadingScene";
 import { gameScene } from "./scenes/gameScene";
 
-const config: Phaser.Types.Core.GameConfig = {
-    title: "Pique Catch",
-    type: Phaser.AUTO,
-    backgroundColor: "#85b5e1",
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        parent: "game",
-        width: 800,
-        height: 600
-    },
-    scene: [loadingScene, gameScene],
-    physics: {
-        default: "arcade",
-        arcade: {
-            gravity: { y: 300 },
-            debug: false
-        }
-    },
-    input: {
-        keyboard: true,
-        mouse: true
-    },
-    pixelArt: true
-};
+function buildConfig(): Phaser.Types.Core.GameConfig {
+    return {
+        title: "Pique Catch",
+        type: Phaser.AUTO,
+        backgroundColor: "#85b5e1",
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH,
+            parent: "game",
+            width: 800,
+            height: 600
+        },
+        scene: [loadingScene, gameScene],
+        physics: {
+            default: "arcade",
+            arcade: {
+                gravity: { y: 300 },
+                debug: false
+            }
+        },
+        input: { keyboard: true, mouse: true },
+        pixelArt: true
+    };
+}
 
 export class Game extends Phaser.Game {
     constructor(config: Phaser.Types.Core.GameConfig) {
@@ -34,8 +33,24 @@ export class Game extends Phaser.Game {
     }
 }
 
-// Called by index.html after the player types a nickname.
+// Called by index.html (or auto-invoked below) once a nickname is chosen.
 (window as any).startGame = (nickname: string) => {
     (window as any).PLAYER_NAME = nickname;
-    return new Game(config);
+
+    const login = document.getElementById("login");
+    if (login) login.style.display = "none";
+
+    const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+    if (isTouch) {
+        const touch = document.getElementById("touch");
+        if (touch) touch.style.display = "block";
+    }
+
+    return new Game(buildConfig());
 };
+
+// If the player clicked PLAY before this bundle finished loading, start now.
+if ((window as any).__pendingName) {
+    (window as any).startGame((window as any).__pendingName);
+    (window as any).__pendingName = null;
+}

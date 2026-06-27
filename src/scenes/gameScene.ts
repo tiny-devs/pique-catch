@@ -1,4 +1,4 @@
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 
 interface RemotePlayer {
     sprite: Phaser.GameObjects.Sprite;
@@ -249,6 +249,9 @@ export class gameScene extends Phaser.Scene {
         this.physics.pause();
         this.setHudVisible(false);
 
+        // schedule recovery first, so the game always unfreezes even if something throws
+        this.time.delayedCall(2500, () => this.endCatchCinematic());
+
         // impact juice
         cam.flash(160, 255, 255, 255);
         cam.shake(240, 0.014);
@@ -256,14 +259,15 @@ export class gameScene extends Phaser.Scene {
         cam.zoomTo(3.2, 380, 'Sine.easeInOut');
 
         // desaturate to black & white (WebGL only)
-        let gray: any = null;
-        if (this.renderer.type === Phaser.WEBGL && (cam as any).postFX) {
-            gray = (cam as any).postFX.addColorMatrix();
-            this.tweens.addCounter({
-                from: 0, to: 1, duration: 280,
-                onUpdate: (tw) => gray.grayscale(tw.getValue())
-            });
-        }
+        try {
+            if (this.game.renderer.type === Phaser.WEBGL && (cam as any).postFX) {
+                const gray = (cam as any).postFX.addColorMatrix();
+                this.tweens.addCounter({
+                    from: 0, to: 1, duration: 280,
+                    onUpdate: (tw) => gray.grayscale(tw.getValue())
+                });
+            }
+        } catch (e) { /* grayscale unsupported — keep the rest of the cinematic */ }
 
         // "X caught Y" with a punchy scale-in
         const catcher = msg.catcher.id === this.myId ? 'You' : msg.catcher.name;
@@ -272,8 +276,6 @@ export class gameScene extends Phaser.Scene {
         this.catchText.setAlpha(1).setScale(0).setAngle(-6);
         this.tweens.add({ targets: this.catchText, scale: 1, angle: 0, duration: 550, ease: 'Back.easeOut' });
         this.tweens.add({ targets: this.catchText, scale: 1.06, yoyo: true, repeat: 2, delay: 600, duration: 220 });
-
-        this.time.delayedCall(2500, () => this.endCatchCinematic());
     }
 
     private endCatchCinematic(): void {
