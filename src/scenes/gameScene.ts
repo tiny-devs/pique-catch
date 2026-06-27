@@ -51,12 +51,19 @@ export class gameScene extends Phaser.Scene {
     private marked: number = null;
     private roundLeft: number = 0;
     private phase: string = "waiting";
+    private frozen: boolean = false;
 
-    // hud
+    // cameras
+    private uiCamera: Phaser.Cameras.Scene2D.Camera;
+
+    // hud (UI camera)
     private hud: Phaser.GameObjects.Text;
     private rankText: Phaser.GameObjects.Text;
     private roundText: Phaser.GameObjects.Text;
     private announce: Phaser.GameObjects.Text;
+    private catchText: Phaser.GameObjects.Text;
+
+    // world overlay
     private marker: Phaser.GameObjects.Graphics;
 
     constructor() {
@@ -100,26 +107,41 @@ export class gameScene extends Phaser.Scene {
         this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-        // --- HUD
+        // --- HUD (rendered by a separate UI camera so it is never zoomed/grayed)
         this.rankText = this.add.text(10, 8, '', {
             fontFamily: 'monospace', fontSize: '14px', color: '#ffffff'
-        }).setDepth(1000).setScrollFactor(0);
+        }).setDepth(1000);
         this.rankText.setStroke('#000000', 4);
 
         this.roundText = this.add.text(400, 8, '', {
             fontFamily: 'monospace', fontSize: '16px', color: '#ffffff', align: 'center'
-        }).setOrigin(0.5, 0).setDepth(1000).setScrollFactor(0);
+        }).setOrigin(0.5, 0).setDepth(1000);
         this.roundText.setStroke('#000000', 4);
 
         this.hud = this.add.text(790, 8, '', {
             fontFamily: 'monospace', fontSize: '13px', color: '#ffffff', align: 'right'
-        }).setOrigin(1, 0).setDepth(1000).setScrollFactor(0);
+        }).setOrigin(1, 0).setDepth(1000);
         this.hud.setStroke('#000000', 3);
 
-        this.announce = this.add.text(400, 270, '', {
-            fontFamily: 'monospace', fontSize: '26px', color: '#ffd23f', align: 'center'
-        }).setOrigin(0.5).setDepth(1001).setScrollFactor(0);
+        this.announce = this.add.text(400, 110, '', {
+            fontFamily: 'monospace', fontSize: '24px', color: '#ffd23f', align: 'center'
+        }).setOrigin(0.5).setDepth(1001);
         this.announce.setStroke('#000000', 5);
+
+        this.catchText = this.add.text(400, 300, '', {
+            fontFamily: 'Arial Black, Arial, sans-serif', fontSize: '40px',
+            color: '#ffffff', align: 'center', fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(1002).setAlpha(0);
+        this.catchText.setStroke('#000000', 8);
+
+        // --- two-camera split: main = world (zoom/B&W), uiCamera = HUD (always crisp)
+        this.uiCamera = this.cameras.add(0, 0, 800, 600);
+        const uiObjects: Phaser.GameObjects.GameObject[] =
+            [this.rankText, this.roundText, this.hud, this.announce, this.catchText];
+        const worldObjects: Phaser.GameObjects.GameObject[] =
+            [this.clouds, this.back, this.walls, this.marker, this.localPlayer, this.localLabel];
+        this.cameras.main.ignore(uiObjects);
+        this.uiCamera.ignore(worldObjects);
 
         // --- networking
         this.connect();
@@ -130,6 +152,8 @@ export class gameScene extends Phaser.Scene {
     }
 
     update(time: number): void {
+        if (this.frozen) return; // cinematic running — camera/tweens keep playing on their own
+
         this.clouds.tilePositionX -= 0.3;
 
         this.handleLocalMovement();
@@ -194,7 +218,6 @@ export class gameScene extends Phaser.Scene {
         }
     }
 
-    // draws a pulsing ring around whoever is currently marked
     private drawMarker(): void {
         this.marker.clear();
         if (this.marked === null) return;
@@ -212,6 +235,67 @@ export class gameScene extends Phaser.Scene {
         const pulse = 13 + Math.sin(this.time.now / 120) * 2;
         this.marker.lineStyle(3, 0xffd23f, 1);
         this.marker.strokeCircle(cx, cy, pulse);
+    }
+
+    // -------------------------------------------------------------- cinematic
+    private startCatchCinematic(msg: any): void {
+        if (this.frozen) return;
+        this.frozen = true;
+
+        const cam = this.cameras.main;
+        const fx = (msg.catcher.x + msg.victim.x) / 2 + 8;
+        const fy = (msg.catcher.y + msg.victim.y) / 2 + 8;
+
+        this.physics.pause();
+        this.setHudVisible(false);
+
+        // impact juice
+        cam.flash(160, 255, 255, 255);
+        cam.shake(240, 0.014);
+        cam.pan(fx, fy, 380, 'Sine.easeInOut');
+        cam.zoomTo(3.2, 380, 'Sine.easeInOut');
+
+        // desaturate to black & white (WebGL only)
+        let gray: any = null;
+        if (this.renderer.type === Phaser.WEBGL && (cam as any).postFX) {
+            gray = (cam as any).postFX.addColorMatrix();
+            this.tweens.addCounter({
+                from: 0, to: 1, duration: 280,
+                onUpdate: (tw) => gray.grayscale(tw.getValue())
+            });
+        }
+
+        // "X caught Y" with a punchy scale-in
+        const catcher = msg.catcher.id === this.myId ? 'You' : msg.catcher.name;
+        const victim = msg.victim.id === this.myId ? 'you' : msg.victim.name;
+        this.catchText.setText(catcher + ' caught ' + victim + '!');
+        this.catchText.setAlpha(1).setScale(0).setAngle(-6);
+        this.tweens.add({ targets: this.catchText, scale: 1, angle: 0, duration: 550, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: this.catchText, scale: 1.06, yoyo: true, repeat: 2, delay: 600, duration: 220 });
+
+        this.time.delayedCall(2500, () => this.endCatchCinematic());
+    }
+
+    private endCatchCinematic(): void {
+        const cam = this.cameras.main;
+        cam.zoomTo(1, 320, 'Sine.easeInOut');
+        cam.pan(400, 300, 320, 'Sine.easeInOut');
+        this.tweens.add({ targets: this.catchText, alpha: 0, duration: 260 });
+
+        this.time.delayedCall(340, () => {
+            if ((cam as any).postFX) (cam as any).postFX.clear();
+            cam.setZoom(1);
+            cam.centerOn(400, 300);
+            this.physics.resume();
+            this.setHudVisible(true);
+            this.frozen = false;
+        });
+    }
+
+    private setHudVisible(v: boolean): void {
+        this.rankText.setVisible(v);
+        this.roundText.setVisible(v);
+        this.hud.setVisible(v);
     }
 
     // ----------------------------------------------------------------- network
@@ -244,15 +328,15 @@ export class gameScene extends Phaser.Scene {
             } else if (msg.t === 'round') {
                 this.sound.play('switchturn');
                 const me = msg.marked === this.myId;
-                this.showAnnounce(me ? 'VOCÊ é o marcado! Fuja!' : 'Peguem ' + msg.name + '!');
+                this.showAnnounce(me ? "You're IT! Run!" : 'Catch ' + msg.name + '!');
             } else if (msg.t === 'roundEnd') {
-                const me = msg.winner === this.myId;
                 if (msg.reason === 'caught') {
                     this.sound.play('playercatch');
-                    this.showAnnounce((me ? 'Você' : msg.name) + ' pegou! +1');
+                    this.startCatchCinematic(msg);
                 } else {
                     this.sound.play('dead');
-                    this.showAnnounce((me ? 'Você' : msg.name) + ' sobreviveu! +1');
+                    const me = msg.winner === this.myId;
+                    this.showAnnounce((me ? 'You' : msg.name) + ' survived! +1');
                 }
             } else if (msg.t === 'pong') {
                 this.ping = Math.round(this.now() - msg.ts);
@@ -273,6 +357,8 @@ export class gameScene extends Phaser.Scene {
                 const sprite = this.add.sprite(p.x, p.y, 'player')
                     .setOrigin(0, 0).setTint(p.color).setDepth(10);
                 const label = this.makeLabel(p.name).setDepth(11);
+                // remotes are world objects — keep them off the UI camera
+                this.uiCamera.ignore([sprite, label]);
                 r = this.remotes[p.id] = { sprite, label, tx: p.x, ty: p.y, flip: !!p.flip };
             }
             r.tx = p.x;
@@ -302,28 +388,25 @@ export class gameScene extends Phaser.Scene {
 
     // -------------------------------------------------------------------- HUD
     private updateHud(): void {
-        // leaderboard
         const sorted = this.scoreboard.slice().sort((a, b) =>
             b.score - a.score || a.name.localeCompare(b.name));
         let rank = 'RANK\n';
         for (let i = 0; i < sorted.length && i < 8; i++) {
             const p = sorted[i];
             const tag = (p.id === this.marked ? '* ' : '  ')
-                + p.name + (p.id === this.myId ? ' (você)' : '');
+                + p.name + (p.id === this.myId ? ' (you)' : '');
             rank += (i + 1) + '. ' + tag + '  ' + p.score + '\n';
         }
         this.rankText.setText(rank);
 
-        // round status
         if (this.phase === 'playing' && this.marked !== null) {
             const m = this.findPlayer(this.marked);
-            const who = m ? (this.marked === this.myId ? 'VOCÊ' : m.name) : '?';
-            this.roundText.setText('PEGA: ' + who + '\n' + this.roundLeft + 's');
+            const who = m ? (this.marked === this.myId ? 'YOU' : m.name) : '?';
+            this.roundText.setText('CATCH: ' + who + '\n' + this.roundLeft + 's');
         } else {
-            this.roundText.setText('Nova rodada...');
+            this.roundText.setText('New round...');
         }
 
-        // fps + ping
         const fps = Math.round((this.game.loop as any).actualFps);
         this.hud.setText('FPS ' + fps + '\nPing ' + this.ping + 'ms');
     }
@@ -337,7 +420,8 @@ export class gameScene extends Phaser.Scene {
 
     private showAnnounce(text: string): void {
         this.announce.setText(text);
-        this.announce.setAlpha(1);
+        this.announce.setAlpha(1).setScale(0.6);
+        this.tweens.add({ targets: this.announce, scale: 1, duration: 350, ease: 'Back.easeOut' });
         this.tweens.add({ targets: this.announce, alpha: 0, delay: 1600, duration: 800 });
     }
 
