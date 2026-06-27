@@ -2,96 +2,110 @@
 <html>
 <head>
   <title>Pique Catch — Online</title>
-  <meta name="viewport" content="initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <style>
     html, body {
       background-color: #232426;
       margin: 0;
       height: 100%;
+      overflow: hidden;
       font-family: -apple-system, Segoe UI, Roboto, sans-serif;
       color: #f0f0f0;
+      -webkit-user-select: none;
+      user-select: none;
     }
-    canvas { display: block; margin: 0 auto; }
-    #game { display: none; }
+    #game { width: 100%; height: 100%; }
+    canvas { display: block; }
 
+    /* ---- login ---- */
     #login {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
+      position: fixed; inset: 0; z-index: 20;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      padding: 16px; box-sizing: border-box; text-align: center;
       background: radial-gradient(circle at 50% 35%, #2e2e30, #1a1b1c);
     }
-    #login h1 {
-      margin: 0;
-      font-size: 42px;
-      letter-spacing: 2px;
-      color: #66c64b;
-      text-shadow: 0 3px 0 #1f5a17;
-    }
+    #login h1 { margin: 0; font-size: 42px; letter-spacing: 2px; color: #66c64b; text-shadow: 0 3px 0 #1f5a17; }
     #login p { margin: 0; opacity: 0.7; font-size: 14px; }
     #nick {
-      width: 280px;
-      padding: 14px 16px;
-      font-size: 18px;
-      text-align: center;
-      border: 2px solid #66c64b;
-      border-radius: 8px;
-      background: #18191a;
-      color: #fff;
-      outline: none;
+      width: 280px; max-width: 80vw; padding: 14px 16px; font-size: 18px; text-align: center;
+      border: 2px solid #66c64b; border-radius: 8px; background: #18191a; color: #fff; outline: none;
     }
     #play {
-      width: 280px;
-      padding: 14px 16px;
-      font-size: 18px;
-      font-weight: 700;
-      border: none;
-      border-radius: 8px;
-      background: #66c64b;
-      color: #10240b;
-      cursor: pointer;
-      transition: transform 0.05s ease, background 0.15s ease;
+      width: 280px; max-width: 80vw; padding: 14px 16px; font-size: 18px; font-weight: 700;
+      border: none; border-radius: 8px; background: #66c64b; color: #10240b; cursor: pointer;
     }
-    #play:hover { background: #74da57; }
     #play:active { transform: translateY(2px); }
     #hint { font-size: 12px; opacity: 0.55; }
+
+    /* ---- touch controls ---- */
+    #touch {
+      position: fixed; inset: 0; z-index: 10; display: none;
+      pointer-events: none; /* only the buttons are interactive */
+    }
+    .tbtn {
+      position: absolute; bottom: 24px;
+      width: 84px; height: 84px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.18);
+      color: #fff; font-size: 30px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent;
+    }
+    .tbtn:active { background: rgba(255,255,255,0.4); }
+    #btn-left  { left: 24px; }
+    #btn-right { left: 128px; }
+    #btn-jump  { right: 24px; width: 96px; height: 96px; font-size: 18px; background: rgba(102,198,75,0.35); }
   </style>
 </head>
 <body>
+  <div id="game"></div>
+
+  <div id="touch">
+    <button id="btn-left"  class="tbtn" data-act="left">◀</button>
+    <button id="btn-right" class="tbtn" data-act="right">▶</button>
+    <button id="btn-jump"  class="tbtn" data-act="jump">PULAR</button>
+  </div>
+
   <div id="login">
     <h1>PIQUE CATCH</h1>
     <p>Servidor global — todo mundo joga junto</p>
     <input id="nick" maxlength="16" placeholder="Digite seu nickname" autocomplete="off" autofocus />
     <button id="play">ENTRAR</button>
-    <span id="hint">Mover: A / D &nbsp;·&nbsp; Pular: W ou Espaço</span>
+    <span id="hint">PC: A / D move · W ou Espaço pula &nbsp;·&nbsp; Mobile: botões na tela</span>
   </div>
-
-  <div id="game"></div>
 
   <script type="module" src="/src/index.ts"></script>
   <script>
     (function () {
       var input = document.getElementById('nick');
-      var button = document.getElementById('play');
       var login = document.getElementById('login');
-      var game = document.getElementById('game');
+      var touch = document.getElementById('touch');
+      var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+      // --- touch controls -> shared flags read by the game (gameScene)
+      window.touchControls = { left: false, right: false, jump: false };
+      function bind(btn) {
+        var act = btn.getAttribute('data-act');
+        var down = function (e) { window.touchControls[act] = true; };
+        var up = function (e) { window.touchControls[act] = false; };
+        btn.addEventListener('pointerdown', down);
+        btn.addEventListener('pointerup', up);
+        btn.addEventListener('pointercancel', up);
+        btn.addEventListener('pointerleave', up);
+      }
+      var btns = document.querySelectorAll('.tbtn');
+      for (var i = 0; i < btns.length; i++) bind(btns[i]);
 
       function start() {
         var name = (input.value || '').trim();
         if (!name) { input.focus(); return; }
         login.style.display = 'none';
-        game.style.display = 'block';
-        // startGame is exposed by the bundle (src/index.ts).
-        window.startGame(name);
+        if (isTouch) touch.style.display = 'block';
+        window.startGame(name); // exposed by the bundle (src/index.ts)
       }
 
-      button.addEventListener('click', start);
-      input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') start();
-      });
+      document.getElementById('play').addEventListener('click', start);
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') start(); });
     })();
   </script>
 </body>

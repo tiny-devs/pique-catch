@@ -4,11 +4,15 @@ import { gameScene } from "./scenes/gameScene";
 
 const config: Phaser.Types.Core.GameConfig = {
     title: "Pique Catch",
-    parent: "game",
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
     backgroundColor: "#85b5e1",
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        parent: "game",
+        width: 800,
+        height: 600
+    },
     scene: [loadingScene, gameScene],
     physics: {
         default: "arcade",
